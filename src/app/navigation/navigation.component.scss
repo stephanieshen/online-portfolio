@@ -1,0 +1,15 @@
+.shen-navigation {
+    display: flex;
+    align-items: center;
+    font-size: var(--font-size-small-heading);
+    gap: 40px;
+
+    a {
+        font-family: var(--font-publicsans-semibold);
+    }
+
+    a:hover {
+        color: var(--amber-glow);
+        text-shadow: 1px 1px 0 var(--dark);
+    }
+}

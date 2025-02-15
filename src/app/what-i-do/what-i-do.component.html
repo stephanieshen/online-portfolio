@@ -1,0 +1,19 @@
+<div class="shen-what-i-do gap-x-15 justify-center relative bg-white px-8 pt-20 pb-35 gap-9 flex flex-col items-center md:flex-row md:pt-30 md:gap-3 md:px-12 xl:p-35 xl:pb-40 xl:gap-12">
+    <img src="assets/icons/title-what-i-do.svg" class="absolute top-[-44px] max-w-[180px] md:max-w-[240px] xl:max-w-[unset]">
+    @for(item of items; track $index) {
+        <div class="shen-what-i-do__item text-white md:min-h-[480px] lg:min-h-[560px] py-10 px-5 xl:py-20 xl:px-8 {{ item.classes }}">
+            <div class="text-center">
+                <shen-circle-icon
+                    [icon]="item.icon"
+                    [classes]="'bg-white lg'"
+                ></shen-circle-icon>
+            </div>
+            <h3 class="text-small-heading mt-18 mb-6">
+                {{ item.title }}
+            </h3>
+            <p>
+                {{ item.description }}
+            </p>
+        </div>
+    }
+</div>

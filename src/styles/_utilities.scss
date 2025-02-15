@@ -1,0 +1,93 @@
+.bg-amber-glow {
+    background-color: var(--amber-glow);
+}
+
+.bg-dusty-pink {
+    background-color: var(--dusty-pink);
+}
+
+.bg-dusty-lavander {
+    background-color: var(--dusty-lavander);
+}
+
+.bg-neon-pink {
+    background-color: var(--neon-pink);
+}
+
+.text-amber-glow {
+    color: var(--amber-glow);
+}
+
+.text-dusty-pink {
+    color: var(--dusty-pink);
+}
+
+.text-dusty-lavander {
+    color: var(--dusty-lavander);
+}
+
+.text-neon-pink {
+    color: var(--neon-pink);
+}
+
+.lexend-deca-bold {
+    font-family: var(--font-lexend-deca-bold);
+}
+
+.lexend-deca-extrabold {
+    font-family: var(--font-lexend-deca-extrabold);
+}
+
+.lexend-deca-semibold {
+    font-family: var(--font-lexend-deca-semibold);
+}
+
+.publicsans-regular {
+    font-family: var(--font-publicsans-regular);
+}
+
+.publicsans-medium {
+    font-family: var(--font-publicsans-medium);
+}
+
+.publicsans-semibold {
+    font-family: var(--font-publicsans-semibold);
+}
+
+.text-base {
+    font-size: var(--font-size-base);
+}
+
+.text-small-heading {
+    font-size: var(--font-size-small-heading);
+}
+
+.text-heading {
+    font-size: var(--font-size-heading);
+}
+
+.text-large-heading {
+    font-size: var(--font-size-large-heading);
+}
+
+.form-error {
+    color: var(--error);
+    font-family: var(--font-publicsans-semibold);
+    margin: 10px 0;
+}
+
+.response-badge {
+    padding: 20px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    color: var(--white);
+
+    &.success {
+        background: var(--success);
+    }
+
+    &.error {
+        background-color: var(--error);
+    }
+}
+

@@ -1,0 +1,80 @@
+<div class="shen-contact px-8 md:px-12 py-12 lg:py-20 lg:px-35">
+    <div class="text-center">
+        <img src="assets/icons/title-get-in-touch.svg" class="mx-auto mb-4 max-w-[280px] lg:max-w-[unset]">
+        <p class="md:text-[20px]">
+            I’d love to hear from you—let’s connect!
+        </p>
+    </div>
+    <div class="shen-contact__container grid p-5 mt-10 md:grid-cols-2 lg:p-10">
+        <div class="shen-contact__image-container">
+            <img src="assets/icons/contact.svg">
+        </div>
+        <div class="md:p-8 lg:pl-20">
+            
+            @if(isEmailSent) {
+                <div class="response-badge success">
+                    Email sent successfully! 
+                </div>
+            }
+            
+            @if(isEmailError) {
+                <div class="response-badge error">
+                    Oops. Something went wrong. Please try again.
+                </div>
+            }
+
+            <form [formGroup]="contactForm">
+                <div class="mb-8">
+                    <label for="name" class="block mb-2">Name</label>
+                    <input type="text" id="name" placeholder="Enter your name" name="name" class="shen-contact__input" formControlName="name">
+
+                    @if (name.touched && name.hasError('required')) {
+                        <div class="form-error">
+                            Please provide a name.
+                        </div>
+                    }
+                </div>
+                <div class="mb-8">
+                    <label for="email" class="block mb-2">Email</label>
+                    <input type="email" id="email" placeholder="Enter your email" name="email" class="shen-contact__input" formControlName="email">
+                    
+                    @if (email.touched && email.hasError('required')) {
+                        <div class="form-error">
+                            Please provide an email.
+                        </div>
+                    }
+                   
+                    @if (email.touched && email.hasError('email')) {
+                        <div class="form-error">
+                            Please enter a valid email address.
+                        </div>
+                    }
+                </div>
+                <div class="mb-8">
+                    <label for="message" class="block mb-2">Message</label>
+                    <textarea id="message" placeholder="Enter your message" rows="5" name="message" class="shen-contact__input" formControlName="message"></textarea>
+                
+                    @if (message.touched && message.hasError('required')) {
+                        <div class="form-error">
+                            Please provide a message.
+                        </div>
+                    }
+                   
+                    @if (message.touched && message.hasError('maxlength')) {
+                        <div class="form-error">
+                            Maximum length of 255 characters exceeded.
+                        </div>
+                    }
+                </div>
+                <input type="hidden" name="access_key" formControlName="access_key">
+                <shen-button
+                    [classes]="'bg-dusty-pink text-white w-full'"
+                    [disabled]="isSending"
+                    (buttonClick)="submitContactForm()"
+                >
+                    {{ isSending ? 'Sending...' : 'Send' }}
+                </shen-button>
+            </form>
+        </div>
+    </div>
+</div>

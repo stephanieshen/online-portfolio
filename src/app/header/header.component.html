@@ -1,0 +1,32 @@
+<div class="shen-header px-8 pt-20 pb-35 md:p-12 md:pb-30 xl:p-40">
+    <div class="shen-header__nav absolute top-[50px] right-40 hidden lg:block">
+        <shen-navigation></shen-navigation>
+    </div>
+    <div class="grid items-center md:grid-cols-2">
+        <div>
+            <img src="assets/icons/hello.svg">
+            <p class="mt-4 mb-7">
+                I'm Shen, a Front-end Developer specializing in crafting dynamic,
+                user-friendly web applications using the Angular Framework.
+                When I’m not coding, I’m usually pretending to be a badminton pro,
+                going for walks, or hiking—because crying over a bug is better with a view.
+            </p>
+            <shen-button [classes]="'bg-amber-glow'" (buttonClick)="openResume()">
+                Get My Resume
+            </shen-button>
+            <div class="flex gap-3 items-center mt-11">
+                @for (social of socials; track $index) {
+                    <shen-circle-icon
+                        [classes]="social.classes + ' xs cursor-pointer'"
+                        [icon]="social.icon"
+                        (iconClick)="onIconClick(social)"
+                    ></shen-circle-icon>
+                }
+            </div>
+        </div>
+
+        <div class="flex justify-center hidden md:block">
+            <img src="assets/icons/header-image.svg">
+        </div>
+    </div>
+</div>

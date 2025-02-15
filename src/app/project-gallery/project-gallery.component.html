@@ -1,0 +1,25 @@
+<div class="shen-project-gallery relative">
+    <img src="assets/icons/title-project-gallery.svg" class="absolute left-[50%] transform translate-x-[-50%] top-[-120px] max-w-[280px] md:max-w-[unset]">
+    @for(project of projects; track $index; let index = $index) {
+        <div class="grid items-center bg-white lg:grid-cols-2">
+            <div
+                [ngStyle]="{'background-image': 'url(assets/icons/' + project.bgImage  +')'}"
+                class="{{ index % 2 === 0 ? 'lg:order-1' : 'lg:order-2' }} {{ project?.bgPositionClass }} min-h-[320px] md:min-h-[559px] bg-cover"
+            ></div>
+            <div class="px-8 py-20 md:px-12 lg:p-17 {{ index % 2 === 0 ? 'lg:order-2' : 'lg:order-1' }}">
+                <img [src]="'assets/icons/' + project.title" class="mb-2">
+                <label class="text-small-heading publicsans-semibold">
+                    {{ project.subtitle }}
+                </label>
+                <p class="my-7">
+                    {{ project.description }}
+                </p>
+                @if(project.url) {
+                    <shen-button [classes]="project.classes + ' min-w-[122px]'" (buttonClick)="openProject(project.url)">
+                        View
+                    </shen-button>
+                }
+            </div>
+        </div>
+    }
+</div>

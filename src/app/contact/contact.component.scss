@@ -1,0 +1,32 @@
+.shen-contact {
+
+    &__container {
+        border: 1px solid var(--dark);
+        background: white;
+        border-radius: 8px;
+        box-shadow: 5px 5px 0 var(--dark);
+    }
+
+    &__input {
+        border-radius: 8px;
+        border: 1px solid var(--dark);
+        padding: 9px 12px;
+        box-shadow: 3px 3px 0 var(--dark);
+        background-color: var(--white);
+        width: 100%;
+
+        &:focus {
+            outline: none;
+        }
+    }
+
+    &__image-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+            width: 100%;
+        }
+    }
+}

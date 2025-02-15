@@ -1,0 +1,14 @@
+<div class="shen-tools relative px-8 pt-20 pb-60 md:pt-40 md-px-12 xl:pb-70 xl:px-35">
+    <img src="assets/icons/title-tools.svg" class="absolute top-[-44px] left-[50%] transform translate-x-[-50%] max-w-[330px] md:max-w-[unset]">
+    <div class="flex justify-center">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-y-15 place-items-center w-full max-w-[850px]">
+            @for(tool of tools; track $index) {
+                <shen-circle-icon
+                    [icon]="tool.icon"
+                    [text]="tool.title"
+                    [classes]="'bg-white'"
+                ></shen-circle-icon>
+            }
+        </div>
+    </div>
+</div>

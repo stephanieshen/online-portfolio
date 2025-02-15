@@ -1,0 +1,10 @@
+<div class="shen-circle-icon" (click)="onIconClick()">
+    <div class="shen-circle-icon__circle {{ classes }}">
+        <img src="{{ 'assets/icons/' + icon }}">
+    </div>
+    @if (text) {
+        <label class="shen-circle-icon__text">
+            {{ text }}
+        </label>
+    }
+</div>

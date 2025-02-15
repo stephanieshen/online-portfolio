@@ -1,0 +1,36 @@
+.shen-circle-icon {
+    display: inline-block;
+    text-align: center;
+
+    &__circle {
+        width: 130px;
+        height: 130px;
+        border: 2px solid var(--dark);
+        border-radius: 100%;
+        box-shadow: 3px 3px 0 var(--dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        @media (max-width: 640px) {
+            width: 110px;
+            height: 110px;
+        }
+
+        &.sm {
+            width: 45px;
+            height: 45px;
+        }
+
+        &.xs {
+            width: 38px;
+            height: 38px;
+        }
+    }
+
+    &__text {
+        display: block;
+        margin-top: 33px;
+        font-family: var(--font-publicsans-semibold);
+    }
+}

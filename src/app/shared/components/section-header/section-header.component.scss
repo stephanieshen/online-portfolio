@@ -1,0 +1,26 @@
+.shen-section-header {
+    border: 1px solid var(--dark);
+    box-shadow: 3px 3px 0 var(--dark);
+    border: 1px solid var(--dark);
+    font-family: var(--font-lexend-deca-extrabold);
+    color: var(--white);
+    text-shadow: 3px 3px 0 var(--dark);
+    display: inline-block;
+    padding: 7px 20px;
+
+    &.amber-glow {
+        background-color: var(--amber-glow);
+    }
+
+    &.dusty-pink {
+        background-color: var(--dusty-pink);
+    }
+
+    &.dusty-lavander {
+        background-color: var(--dusty-lavander);
+    }
+
+    &__title {
+        font-size: var(--font-size-heading);
+    }
+}
