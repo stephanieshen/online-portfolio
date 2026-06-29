@@ -1,9 +1,9 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'shen-circle-icon',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './circle-icon.component.html',
   styleUrl: './circle-icon.component.scss'
 })

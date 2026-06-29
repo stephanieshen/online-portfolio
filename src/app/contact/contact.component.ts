@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ButtonComponent } from '../shared/components/button/button.component';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 import { ContactService } from '../core/services/contact.service';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -9,9 +9,8 @@ import { Subject, takeUntil } from 'rxjs';
   selector: 'shen-contact',
   imports: [
     ButtonComponent,
-    CommonModule,
     ReactiveFormsModule
-  ],
+],
   templateUrl: './contact.component.html',
   styleUrl: './contact.component.scss'
 })
