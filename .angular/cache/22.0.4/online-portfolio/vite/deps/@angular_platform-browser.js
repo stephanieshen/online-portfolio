@@ -10,11 +10,6 @@ import {
   EVENT_MANAGER_PLUGINS,
   EventManager,
   EventManagerPlugin,
-  HAMMER_GESTURE_CONFIG,
-  HAMMER_LOADER,
-  HammerGestureConfig,
-  HammerGesturesPlugin,
-  HammerModule,
   HydrationFeatureKind,
   KeyEventsPlugin,
   Meta,
@@ -33,16 +28,17 @@ import {
   withHttpTransferCacheOptions,
   withI18nSupport,
   withIncrementalHydration,
-  withNoHttpTransferCache
-} from "./chunk-ZALMSRPM.js";
-import "./chunk-CVEH2A25.js";
-import "./chunk-YGO37SZP.js";
+  withNoHttpTransferCache,
+  withNoIncrementalHydration
+} from "./chunk-GIM2E4BA.js";
+import "./chunk-XFISCDLZ.js";
+import "./chunk-KFFH5TYR.js";
 import {
   getDOM
-} from "./chunk-SCH5VNI4.js";
-import "./chunk-QPANWYDY.js";
+} from "./chunk-TFPDV6BE.js";
+import "./chunk-ZMC6RG2R.js";
 import "./chunk-RSS3ODKE.js";
-import "./chunk-WDMUDEB6.js";
+import "./chunk-FMGVFGPW.js";
 export {
   BrowserModule,
   By,
@@ -50,10 +46,6 @@ export {
   EVENT_MANAGER_PLUGINS,
   EventManager,
   EventManagerPlugin,
-  HAMMER_GESTURE_CONFIG,
-  HAMMER_LOADER,
-  HammerGestureConfig,
-  HammerModule,
   HydrationFeatureKind,
   Meta,
   REMOVE_STYLES_ON_COMPONENT_DESTROY,
@@ -71,12 +63,12 @@ export {
   withI18nSupport,
   withIncrementalHydration,
   withNoHttpTransferCache,
+  withNoIncrementalHydration,
   BrowserDomAdapter as ɵBrowserDomAdapter,
   BrowserGetTestability as ɵBrowserGetTestability,
   DomEventsPlugin as ɵDomEventsPlugin,
   DomRendererFactory2 as ɵDomRendererFactory2,
   DomSanitizerImpl as ɵDomSanitizerImpl,
-  HammerGesturesPlugin as ɵHammerGesturesPlugin,
   KeyEventsPlugin as ɵKeyEventsPlugin,
   SharedStylesHost as ɵSharedStylesHost,
   getDOM as ɵgetDOM

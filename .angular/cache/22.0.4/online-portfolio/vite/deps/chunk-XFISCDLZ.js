@@ -2,7 +2,7 @@ import {
   PlatformLocation,
   XhrFactory,
   parseCookieValue
-} from "./chunk-SCH5VNI4.js";
+} from "./chunk-TFPDV6BE.js";
 import {
   APP_BOOTSTRAP_LISTENER,
   ApplicationRef,
@@ -19,6 +19,7 @@ import {
   PendingTasks,
   ResourceImpl,
   RuntimeError,
+  Service,
   TracingService,
   TransferState,
   assertInInjectionContext,
@@ -37,8 +38,9 @@ import {
   ɵɵdefineInjectable,
   ɵɵdefineInjector,
   ɵɵdefineNgModule,
+  ɵɵdefineService,
   ɵɵinject
-} from "./chunk-QPANWYDY.js";
+} from "./chunk-ZMC6RG2R.js";
 import {
   Observable,
   concatMap,
@@ -53,7 +55,7 @@ import {
   __objRest,
   __spreadProps,
   __spreadValues
-} from "./chunk-WDMUDEB6.js";
+} from "./chunk-FMGVFGPW.js";
 
 // node_modules/@angular/common/fesm2022/_module-chunk.mjs
 var HttpHeaders = class _HttpHeaders {
@@ -472,6 +474,8 @@ var HttpRequest = class _HttpRequest {
   headers;
   context;
   reportProgress = false;
+  reportUploadProgress = false;
+  reportDownloadProgress = false;
   withCredentials = false;
   credentials;
   keepalive = false;
@@ -500,6 +504,8 @@ var HttpRequest = class _HttpRequest {
     }
     if (options) {
       this.reportProgress = !!options.reportProgress;
+      this.reportUploadProgress = !!options.reportUploadProgress;
+      this.reportDownloadProgress = !!options.reportDownloadProgress;
       this.withCredentials = !!options.withCredentials;
       this.keepalive = !!options.keepalive;
       if (!!options.responseType) {
@@ -556,9 +562,16 @@ var HttpRequest = class _HttpRequest {
       if (params.length === 0) {
         this.urlWithParams = url;
       } else {
-        const qIdx = url.indexOf("?");
-        const sep = qIdx === -1 ? "?" : qIdx < url.length - 1 ? "&" : "";
-        this.urlWithParams = url + sep + params;
+        let urlWithoutFragment = url;
+        let fragment = "";
+        const hashIdx = url.indexOf("#");
+        if (hashIdx !== -1) {
+          fragment = url.substring(hashIdx);
+          urlWithoutFragment = url.substring(0, hashIdx);
+        }
+        const qIdx = urlWithoutFragment.indexOf("?");
+        const sep = qIdx === -1 ? "?" : qIdx < urlWithoutFragment.length - 1 ? "&" : "";
+        this.urlWithParams = urlWithoutFragment + sep + params + fragment;
       }
     }
   }
@@ -619,6 +632,8 @@ var HttpRequest = class _HttpRequest {
     const body = update.body !== void 0 ? update.body : this.body;
     const withCredentials = update.withCredentials ?? this.withCredentials;
     const reportProgress = update.reportProgress ?? this.reportProgress;
+    const reportUploadProgress = update.reportUploadProgress ?? this.reportUploadProgress;
+    const reportDownloadProgress = update.reportDownloadProgress ?? this.reportDownloadProgress;
     let headers = update.headers || this.headers;
     let params = update.params || this.params;
     const context = update.context ?? this.context;
@@ -633,6 +648,8 @@ var HttpRequest = class _HttpRequest {
       headers,
       context,
       reportProgress,
+      reportUploadProgress,
+      reportDownloadProgress,
       responseType,
       withCredentials,
       transferCache,
@@ -794,13 +811,17 @@ var HttpStatusCode;
   HttpStatusCode2[HttpStatusCode2["NetworkAuthenticationRequired"] = 511] = "NetworkAuthenticationRequired";
 })(HttpStatusCode || (HttpStatusCode = {}));
 var XSSI_PREFIX$1 = /^\)\]\}',?\n/;
-var FETCH_BACKEND = new InjectionToken(typeof ngDevMode === "undefined" || ngDevMode ? "FETCH_BACKEND" : "");
+var DEFAULT_SSR_MAX_RESPONSE_BODY_SIZE = 1024 * 1024;
+var HTTP_FETCH_MAX_RESPONSE_SIZE = new InjectionToken(typeof ngDevMode !== "undefined" && ngDevMode ? "HTTP_FETCH_MAX_RESPONSE_SIZE" : "", {
+  factory: () => false ? DEFAULT_SSR_MAX_RESPONSE_BODY_SIZE : null
+});
 var FetchBackend = class _FetchBackend {
   fetchImpl = inject(FetchFactory, {
     optional: true
   })?.fetch ?? ((...args) => globalThis.fetch(...args));
   ngZone = inject(NgZone);
   destroyRef = inject(DestroyRef);
+  maxResponseSize = inject(HTTP_FETCH_MAX_RESPONSE_SIZE);
   handle(request) {
     return new Observable((observer) => {
       const aborter = new AbortController();
@@ -851,7 +872,8 @@ var FetchBackend = class _FetchBackend {
       const url = response.url || request.urlWithParams;
       let status = response.status;
       let body = null;
-      if (request.reportProgress) {
+      const reportDownloadProgress = request.reportProgress || request.reportDownloadProgress;
+      if (reportDownloadProgress) {
         observer.next(new HttpHeaderResponse({
           headers,
           status,
@@ -861,6 +883,10 @@ var FetchBackend = class _FetchBackend {
       }
       if (response.body) {
         const contentLength = response.headers.get("content-length");
+        const contentLengthValue = contentLength !== null ? Number(contentLength) : NaN;
+        if (this.maxResponseSize !== null && Number.isFinite(contentLengthValue) && contentLengthValue > this.maxResponseSize) {
+          throwBodyTooLargeError(this.maxResponseSize);
+        }
         const chunks = [];
         const reader = response.body.getReader();
         let receivedLength = 0;
@@ -884,13 +910,17 @@ var FetchBackend = class _FetchBackend {
             }
             chunks.push(value);
             receivedLength += value.length;
-            if (request.reportProgress) {
+            if (this.maxResponseSize !== null && receivedLength > this.maxResponseSize) {
+              yield reader.cancel();
+              throwBodyTooLargeError(this.maxResponseSize);
+            }
+            if (reportDownloadProgress) {
               partialText = request.responseType === "text" ? (partialText ?? "") + (decoder ??= new TextDecoder()).decode(value, {
                 stream: true
               }) : void 0;
               const reportProgress = () => observer.next({
                 type: HttpEventType.DownloadProgress,
-                total: contentLength ? +contentLength : void 0,
+                total: Number.isFinite(contentLengthValue) ? contentLengthValue : void 0,
                 loaded: receivedLength,
                 partialText
               });
@@ -973,6 +1003,9 @@ var FetchBackend = class _FetchBackend {
     }
   }
   createRequestInit(req) {
+    if (req.reportUploadProgress) {
+      throw new RuntimeError(2824, ngDevMode && "The FetchBackend does not support upload progress reporting. Please use `withXhr()` on your `provideHttpClient()` configuration if you want to report upload progress.");
+    }
     const headers = {};
     let credentials;
     credentials = req.credentials;
@@ -1017,14 +1050,14 @@ var FetchBackend = class _FetchBackend {
   static ɵfac = function FetchBackend_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _FetchBackend)();
   };
-  static ɵprov = ɵɵdefineInjectable({
+  static ɵprov = ɵɵdefineService({
     token: _FetchBackend,
     factory: _FetchBackend.ɵfac
   });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(FetchBackend, [{
-    type: Injectable
+    type: Service
   }], null, null);
 })();
 var FetchFactory = class {
@@ -1039,260 +1072,9 @@ function warningOptionsMessage(req) {
 function silenceSuperfluousUnhandledPromiseRejection(promise) {
   promise.then(noop, noop);
 }
-var XSSI_PREFIX = /^\)\]\}',?\n/;
-function validateXhrCompatibility(req) {
-  const unsupportedOptions = [{
-    property: "keepalive",
-    errorCode: 2813
-  }, {
-    property: "cache",
-    errorCode: 2814
-  }, {
-    property: "priority",
-    errorCode: 2815
-  }, {
-    property: "mode",
-    errorCode: 2816
-  }, {
-    property: "redirect",
-    errorCode: 2817
-  }, {
-    property: "credentials",
-    errorCode: 2818
-  }, {
-    property: "integrity",
-    errorCode: 2820
-  }, {
-    property: "referrer",
-    errorCode: 2821
-  }, {
-    property: "referrerPolicy",
-    errorCode: 2823
-  }];
-  for (const {
-    property,
-    errorCode
-  } of unsupportedOptions) {
-    if (req[property]) {
-      console.warn(formatRuntimeError(errorCode, `Angular detected that a \`HttpClient\` request with the \`${property}\` option was sent using XHR, which does not support it. To use the \`${property}\` option, enable Fetch API support by passing \`withFetch()\` as an argument to \`provideHttpClient()\`.`));
-    }
-  }
+function throwBodyTooLargeError(maxResponseSize) {
+  throw new RuntimeError(-2825, ngDevMode && `Fetch response body exceeded the configured buffer limit (${maxResponseSize} bytes).`);
 }
-var HttpXhrBackend = class _HttpXhrBackend {
-  xhrFactory;
-  tracingService = inject(TracingService, {
-    optional: true
-  });
-  constructor(xhrFactory) {
-    this.xhrFactory = xhrFactory;
-  }
-  maybePropagateTrace(fn) {
-    return this.tracingService?.propagate ? this.tracingService.propagate(fn) : fn;
-  }
-  handle(req) {
-    if (req.method === "JSONP") {
-      throw new RuntimeError(-2800, (typeof ngDevMode === "undefined" || ngDevMode) && `Cannot make a JSONP request without JSONP support. To fix the problem, either add the \`withJsonpSupport()\` call (if \`provideHttpClient()\` is used) or import the \`HttpClientJsonpModule\` in the root NgModule.`);
-    }
-    ngDevMode && validateXhrCompatibility(req);
-    const xhrFactory = this.xhrFactory;
-    const source = false ? from(xhrFactory.ɵloadImpl()) : of(null);
-    return source.pipe(switchMap(() => {
-      return new Observable((observer) => {
-        const xhr = xhrFactory.build();
-        xhr.open(req.method, req.urlWithParams);
-        if (req.withCredentials) {
-          xhr.withCredentials = true;
-        }
-        req.headers.forEach((name, values) => xhr.setRequestHeader(name, values.join(",")));
-        if (!req.headers.has(ACCEPT_HEADER)) {
-          xhr.setRequestHeader(ACCEPT_HEADER, ACCEPT_HEADER_VALUE);
-        }
-        if (!req.headers.has(CONTENT_TYPE_HEADER)) {
-          const detectedType = req.detectContentTypeHeader();
-          if (detectedType !== null) {
-            xhr.setRequestHeader(CONTENT_TYPE_HEADER, detectedType);
-          }
-        }
-        if (req.timeout) {
-          xhr.timeout = req.timeout;
-        }
-        if (req.responseType) {
-          const responseType = req.responseType.toLowerCase();
-          xhr.responseType = responseType !== "json" ? responseType : "text";
-        }
-        const reqBody = req.serializeBody();
-        let headerResponse = null;
-        const partialFromXhr = () => {
-          if (headerResponse !== null) {
-            return headerResponse;
-          }
-          const statusText = xhr.statusText || "OK";
-          const headers = new HttpHeaders(xhr.getAllResponseHeaders());
-          const url = xhr.responseURL || req.url;
-          headerResponse = new HttpHeaderResponse({
-            headers,
-            status: xhr.status,
-            statusText,
-            url
-          });
-          return headerResponse;
-        };
-        const onLoad = this.maybePropagateTrace(() => {
-          let {
-            headers,
-            status,
-            statusText,
-            url
-          } = partialFromXhr();
-          let body = null;
-          if (status !== HTTP_STATUS_CODE_NO_CONTENT) {
-            body = typeof xhr.response === "undefined" ? xhr.responseText : xhr.response;
-          }
-          if (status === 0) {
-            status = !!body ? HTTP_STATUS_CODE_OK : 0;
-          }
-          let ok = status >= 200 && status < 300;
-          if (req.responseType === "json" && typeof body === "string") {
-            const originalBody = body;
-            body = body.replace(XSSI_PREFIX, "");
-            try {
-              body = body !== "" ? JSON.parse(body) : null;
-            } catch (error) {
-              body = originalBody;
-              if (ok) {
-                ok = false;
-                body = {
-                  error,
-                  text: body
-                };
-              }
-            }
-          }
-          if (ok) {
-            observer.next(new HttpResponse({
-              body,
-              headers,
-              status,
-              statusText,
-              url: url || void 0
-            }));
-            observer.complete();
-          } else {
-            observer.error(new HttpErrorResponse({
-              error: body,
-              headers,
-              status,
-              statusText,
-              url: url || void 0
-            }));
-          }
-        });
-        const onError = this.maybePropagateTrace((error) => {
-          const {
-            url
-          } = partialFromXhr();
-          const res = new HttpErrorResponse({
-            error,
-            status: xhr.status || 0,
-            statusText: xhr.statusText || "Unknown Error",
-            url: url || void 0
-          });
-          observer.error(res);
-        });
-        let onTimeout = onError;
-        if (req.timeout) {
-          onTimeout = this.maybePropagateTrace((_) => {
-            const {
-              url
-            } = partialFromXhr();
-            const res = new HttpErrorResponse({
-              error: new DOMException("Request timed out", "TimeoutError"),
-              status: xhr.status || 0,
-              statusText: xhr.statusText || "Request timeout",
-              url: url || void 0
-            });
-            observer.error(res);
-          });
-        }
-        let sentHeaders = false;
-        const onDownProgress = this.maybePropagateTrace((event) => {
-          if (!sentHeaders) {
-            observer.next(partialFromXhr());
-            sentHeaders = true;
-          }
-          let progressEvent = {
-            type: HttpEventType.DownloadProgress,
-            loaded: event.loaded
-          };
-          if (event.lengthComputable) {
-            progressEvent.total = event.total;
-          }
-          if (req.responseType === "text" && !!xhr.responseText) {
-            progressEvent.partialText = xhr.responseText;
-          }
-          observer.next(progressEvent);
-        });
-        const onUpProgress = this.maybePropagateTrace((event) => {
-          let progress = {
-            type: HttpEventType.UploadProgress,
-            loaded: event.loaded
-          };
-          if (event.lengthComputable) {
-            progress.total = event.total;
-          }
-          observer.next(progress);
-        });
-        xhr.addEventListener("load", onLoad);
-        xhr.addEventListener("error", onError);
-        xhr.addEventListener("timeout", onTimeout);
-        xhr.addEventListener("abort", onError);
-        if (req.reportProgress) {
-          xhr.addEventListener("progress", onDownProgress);
-          if (reqBody !== null && xhr.upload) {
-            xhr.upload.addEventListener("progress", onUpProgress);
-          }
-        }
-        xhr.send(reqBody);
-        observer.next({
-          type: HttpEventType.Sent
-        });
-        return () => {
-          xhr.removeEventListener("error", onError);
-          xhr.removeEventListener("abort", onError);
-          xhr.removeEventListener("load", onLoad);
-          xhr.removeEventListener("timeout", onTimeout);
-          if (req.reportProgress) {
-            xhr.removeEventListener("progress", onDownProgress);
-            if (reqBody !== null && xhr.upload) {
-              xhr.upload.removeEventListener("progress", onUpProgress);
-            }
-          }
-          if (xhr.readyState !== xhr.DONE) {
-            xhr.abort();
-          }
-        };
-      });
-    }));
-  }
-  static ɵfac = function HttpXhrBackend_Factory(__ngFactoryType__) {
-    return new (__ngFactoryType__ || _HttpXhrBackend)(ɵɵinject(XhrFactory));
-  };
-  static ɵprov = ɵɵdefineInjectable({
-    token: _HttpXhrBackend,
-    factory: _HttpXhrBackend.ɵfac,
-    providedIn: "root"
-  });
-};
-(() => {
-  (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpXhrBackend, [{
-    type: Injectable,
-    args: [{
-      providedIn: "root"
-    }]
-  }], () => [{
-    type: XhrFactory
-  }], null);
-})();
 function interceptorChainEndFn(req, finalHandlerFn) {
   return finalHandlerFn(req);
 }
@@ -1342,7 +1124,7 @@ var HttpBackend = class _HttpBackend {
       if (__ngFactoryType__) {
         __ngConditionalFactory__ = new (__ngFactoryType__ || _HttpBackend)();
       } else {
-        __ngConditionalFactory__ = ɵɵinject(HttpXhrBackend);
+        __ngConditionalFactory__ = ɵɵinject(FetchBackend);
       }
       return __ngConditionalFactory__;
     },
@@ -1354,7 +1136,7 @@ var HttpBackend = class _HttpBackend {
     type: Injectable,
     args: [{
       providedIn: "root",
-      useExisting: HttpXhrBackend
+      useExisting: FetchBackend
     }]
   }], null, null);
 })();
@@ -1372,7 +1154,7 @@ var HttpInterceptorHandler = class _HttpInterceptorHandler {
       const isTestingBackend = this.backend.isTestingBackend;
       if (false) {
         fetchBackendWarningDisplayed = true;
-        injector.get(Console).warn(formatRuntimeError(2801, "Angular detected that `HttpClient` is not configured to use `fetch` APIs. It's strongly recommended to enable `fetch` for applications that use Server-Side Rendering for better performance and compatibility. To enable `fetch`, add the `withFetch()` to the `provideHttpClient()` call at the root of the application."));
+        injector.get(Console).warn(formatRuntimeError(2801, "Angular detected that `HttpClient` is not configured to use `fetch` APIs. It's strongly recommended to enable `fetch` for applications that use Server-Side Rendering for better performance and compatibility. To enable `fetch`, remove the `withXhr()` feature from the `provideHttpClient()` call"));
       }
     }
   }
@@ -1437,27 +1219,9 @@ var HttpHandler = class _HttpHandler {
   }], null, null);
 })();
 function addBody(options, body) {
-  return {
-    body,
-    headers: options.headers,
-    context: options.context,
-    observe: options.observe,
-    params: options.params,
-    reportProgress: options.reportProgress,
-    responseType: options.responseType,
-    withCredentials: options.withCredentials,
-    credentials: options.credentials,
-    transferCache: options.transferCache,
-    timeout: options.timeout,
-    keepalive: options.keepalive,
-    priority: options.priority,
-    cache: options.cache,
-    mode: options.mode,
-    redirect: options.redirect,
-    integrity: options.integrity,
-    referrer: options.referrer,
-    referrerPolicy: options.referrerPolicy
-  };
+  return __spreadValues({
+    body
+  }, options);
 }
 var HttpClient = class _HttpClient {
   handler;
@@ -1490,6 +1254,8 @@ var HttpClient = class _HttpClient {
         context: options.context,
         params,
         reportProgress: options.reportProgress,
+        reportUploadProgress: options.reportUploadProgress,
+        reportDownloadProgress: options.reportDownloadProgress,
         responseType: options.responseType || "json",
         withCredentials: options.withCredentials,
         transferCache: options.transferCache,
@@ -1754,6 +1520,262 @@ var JsonpInterceptor = class _JsonpInterceptor {
     type: EnvironmentInjector
   }], null);
 })();
+var XSSI_PREFIX = /^\)\]\}',?\n/;
+function validateXhrCompatibility(req) {
+  const unsupportedOptions = [{
+    property: "keepalive",
+    errorCode: 2813
+  }, {
+    property: "cache",
+    errorCode: 2814
+  }, {
+    property: "priority",
+    errorCode: 2815
+  }, {
+    property: "mode",
+    errorCode: 2816
+  }, {
+    property: "redirect",
+    errorCode: 2817
+  }, {
+    property: "credentials",
+    errorCode: 2818
+  }, {
+    property: "integrity",
+    errorCode: 2820
+  }, {
+    property: "referrer",
+    errorCode: 2821
+  }, {
+    property: "referrerPolicy",
+    errorCode: 2823
+  }];
+  for (const {
+    property,
+    errorCode
+  } of unsupportedOptions) {
+    if (req[property]) {
+      console.warn(formatRuntimeError(errorCode, `Angular detected that a \`HttpClient\` request with the \`${property}\` option was sent using XHR, which does not support it. To use the \`${property}\` option, use the Fetch API by removing \`withXhr()\` from the \`provideHttpClient()\` call.`));
+    }
+  }
+}
+var HttpXhrBackend = class _HttpXhrBackend {
+  xhrFactory;
+  tracingService = inject(TracingService, {
+    optional: true
+  });
+  constructor(xhrFactory) {
+    this.xhrFactory = xhrFactory;
+  }
+  maybePropagateTrace(fn) {
+    return this.tracingService?.propagate ? this.tracingService.propagate(fn) : fn;
+  }
+  handle(req) {
+    if (req.method === "JSONP") {
+      throw new RuntimeError(-2800, (typeof ngDevMode === "undefined" || ngDevMode) && `Cannot make a JSONP request without JSONP support. To fix the problem, either add the \`withJsonpSupport()\` call (if \`provideHttpClient()\` is used) or import the \`HttpClientJsonpModule\` in the root NgModule.`);
+    }
+    ngDevMode && validateXhrCompatibility(req);
+    const xhrFactory = this.xhrFactory;
+    const source = false ? from(xhrFactory.ɵloadImpl()) : of(null);
+    return source.pipe(switchMap(() => {
+      return new Observable((observer) => {
+        const xhr = xhrFactory.build();
+        xhr.open(req.method, req.urlWithParams);
+        if (req.withCredentials) {
+          xhr.withCredentials = true;
+        }
+        req.headers.forEach((name, values) => xhr.setRequestHeader(name, values.join(",")));
+        if (!req.headers.has(ACCEPT_HEADER)) {
+          xhr.setRequestHeader(ACCEPT_HEADER, ACCEPT_HEADER_VALUE);
+        }
+        if (!req.headers.has(CONTENT_TYPE_HEADER)) {
+          const detectedType = req.detectContentTypeHeader();
+          if (detectedType !== null) {
+            xhr.setRequestHeader(CONTENT_TYPE_HEADER, detectedType);
+          }
+        }
+        if (req.timeout) {
+          xhr.timeout = req.timeout;
+        }
+        if (req.responseType) {
+          const responseType = req.responseType.toLowerCase();
+          xhr.responseType = responseType !== "json" ? responseType : "text";
+        }
+        const reqBody = req.serializeBody();
+        let headerResponse = null;
+        const partialFromXhr = () => {
+          if (headerResponse !== null) {
+            return headerResponse;
+          }
+          const statusText = xhr.statusText || "OK";
+          const headers = new HttpHeaders(xhr.getAllResponseHeaders());
+          const url = xhr.responseURL || req.url;
+          headerResponse = new HttpHeaderResponse({
+            headers,
+            status: xhr.status,
+            statusText,
+            url
+          });
+          return headerResponse;
+        };
+        const onLoad = this.maybePropagateTrace(() => {
+          let {
+            headers,
+            status,
+            statusText,
+            url
+          } = partialFromXhr();
+          let body = null;
+          if (status !== HTTP_STATUS_CODE_NO_CONTENT) {
+            body = typeof xhr.response === "undefined" ? xhr.responseText : xhr.response;
+          }
+          if (status === 0) {
+            status = !!body ? HTTP_STATUS_CODE_OK : 0;
+          }
+          let ok = status >= 200 && status < 300;
+          if (req.responseType === "json" && typeof body === "string") {
+            const originalBody = body;
+            body = body.replace(XSSI_PREFIX, "");
+            try {
+              body = body !== "" ? JSON.parse(body) : null;
+            } catch (error) {
+              body = originalBody;
+              if (ok) {
+                ok = false;
+                body = {
+                  error,
+                  text: body
+                };
+              }
+            }
+          }
+          if (ok) {
+            observer.next(new HttpResponse({
+              body,
+              headers,
+              status,
+              statusText,
+              url: url || void 0
+            }));
+            observer.complete();
+          } else {
+            observer.error(new HttpErrorResponse({
+              error: body,
+              headers,
+              status,
+              statusText,
+              url: url || void 0
+            }));
+          }
+        });
+        const onError = this.maybePropagateTrace((error) => {
+          const {
+            url
+          } = partialFromXhr();
+          const res = new HttpErrorResponse({
+            error,
+            status: xhr.status || 0,
+            statusText: xhr.statusText || "Unknown Error",
+            url: url || void 0
+          });
+          observer.error(res);
+        });
+        let onTimeout = onError;
+        if (req.timeout) {
+          onTimeout = this.maybePropagateTrace((_) => {
+            const {
+              url
+            } = partialFromXhr();
+            const res = new HttpErrorResponse({
+              error: new DOMException("Request timed out", "TimeoutError"),
+              status: xhr.status || 0,
+              statusText: xhr.statusText || "Request timeout",
+              url: url || void 0
+            });
+            observer.error(res);
+          });
+        }
+        let sentHeaders = false;
+        const onDownProgress = this.maybePropagateTrace((event) => {
+          if (!sentHeaders) {
+            observer.next(partialFromXhr());
+            sentHeaders = true;
+          }
+          let progressEvent = {
+            type: HttpEventType.DownloadProgress,
+            loaded: event.loaded
+          };
+          if (event.lengthComputable) {
+            progressEvent.total = event.total;
+          }
+          if (req.responseType === "text" && !!xhr.responseText) {
+            progressEvent.partialText = xhr.responseText;
+          }
+          observer.next(progressEvent);
+        });
+        const onUpProgress = this.maybePropagateTrace((event) => {
+          let progress = {
+            type: HttpEventType.UploadProgress,
+            loaded: event.loaded
+          };
+          if (event.lengthComputable) {
+            progress.total = event.total;
+          }
+          observer.next(progress);
+        });
+        xhr.addEventListener("load", onLoad);
+        xhr.addEventListener("error", onError);
+        xhr.addEventListener("timeout", onTimeout);
+        xhr.addEventListener("abort", onError);
+        const reportUploadProgress = req.reportProgress || req.reportUploadProgress;
+        const reportDownloadProgress = req.reportProgress || req.reportDownloadProgress;
+        if (reportDownloadProgress) {
+          xhr.addEventListener("progress", onDownProgress);
+        }
+        if (reportUploadProgress && reqBody !== null && xhr.upload) {
+          xhr.upload.addEventListener("progress", onUpProgress);
+        }
+        xhr.send(reqBody);
+        observer.next({
+          type: HttpEventType.Sent
+        });
+        return () => {
+          xhr.removeEventListener("error", onError);
+          xhr.removeEventListener("abort", onError);
+          xhr.removeEventListener("load", onLoad);
+          xhr.removeEventListener("timeout", onTimeout);
+          if (reportDownloadProgress) {
+            xhr.removeEventListener("progress", onDownProgress);
+          }
+          if (reportUploadProgress && reqBody !== null && xhr.upload) {
+            xhr.upload.removeEventListener("progress", onUpProgress);
+          }
+          if (xhr.readyState !== xhr.DONE) {
+            xhr.abort();
+          }
+        };
+      });
+    }));
+  }
+  static ɵfac = function HttpXhrBackend_Factory(__ngFactoryType__) {
+    return new (__ngFactoryType__ || _HttpXhrBackend)(ɵɵinject(XhrFactory));
+  };
+  static ɵprov = ɵɵdefineInjectable({
+    token: _HttpXhrBackend,
+    factory: _HttpXhrBackend.ɵfac,
+    providedIn: "root"
+  });
+};
+(() => {
+  (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpXhrBackend, [{
+    type: Injectable,
+    args: [{
+      providedIn: "root"
+    }]
+  }], () => [{
+    type: XhrFactory
+  }], null);
+})();
 var XSRF_ENABLED = new InjectionToken(typeof ngDevMode !== "undefined" && ngDevMode ? "XSRF_ENABLED" : "", {
   factory: () => true
 });
@@ -1786,18 +1808,14 @@ var HttpXsrfCookieExtractor = class _HttpXsrfCookieExtractor {
   static ɵfac = function HttpXsrfCookieExtractor_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _HttpXsrfCookieExtractor)();
   };
-  static ɵprov = ɵɵdefineInjectable({
+  static ɵprov = ɵɵdefineService({
     token: _HttpXsrfCookieExtractor,
-    factory: _HttpXsrfCookieExtractor.ɵfac,
-    providedIn: "root"
+    factory: _HttpXsrfCookieExtractor.ɵfac
   });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpXsrfCookieExtractor, [{
-    type: Injectable,
-    args: [{
-      providedIn: "root"
-    }]
+    type: Service
   }], null, null);
 })();
 var HttpXsrfTokenExtractor = class _HttpXsrfTokenExtractor {
@@ -1881,6 +1899,7 @@ var HttpFeatureKind;
   HttpFeatureKind2[HttpFeatureKind2["JsonpSupport"] = 4] = "JsonpSupport";
   HttpFeatureKind2[HttpFeatureKind2["RequestsMadeViaParent"] = 5] = "RequestsMadeViaParent";
   HttpFeatureKind2[HttpFeatureKind2["Fetch"] = 6] = "Fetch";
+  HttpFeatureKind2[HttpFeatureKind2["Xhr"] = 7] = "Xhr";
 })(HttpFeatureKind || (HttpFeatureKind = {}));
 function makeHttpFeature(kind, providers) {
   return {
@@ -1895,15 +1914,13 @@ function provideHttpClient(...features) {
       throw new Error(ngDevMode ? `Configuration error: found both withXsrfConfiguration() and withNoXsrfProtection() in the same call to provideHttpClient(), which is a contradiction.` : "");
     }
   }
-  const providers = [HttpClient, HttpInterceptorHandler, {
+  const providers = [HttpClient, FetchBackend, HttpInterceptorHandler, {
     provide: HttpHandler,
     useExisting: HttpInterceptorHandler
   }, {
     provide: HttpBackend,
     useFactory: () => {
-      return inject(FETCH_BACKEND, {
-        optional: true
-      }) ?? inject(HttpXhrBackend);
+      return inject(FetchBackend);
     }
   }, {
     provide: HTTP_INTERCEPTOR_FNS,
@@ -1987,11 +2004,14 @@ function withRequestsMadeViaParent() {
 }
 function withFetch() {
   return makeHttpFeature(HttpFeatureKind.Fetch, [FetchBackend, {
-    provide: FETCH_BACKEND,
-    useExisting: FetchBackend
-  }, {
     provide: HttpBackend,
     useExisting: FetchBackend
+  }]);
+}
+function withXhr() {
+  return makeHttpFeature(HttpFeatureKind.Xhr, [HttpXhrBackend, {
+    provide: HttpBackend,
+    useExisting: HttpXhrBackend
   }]);
 }
 var HttpClientXsrfModule = class _HttpClientXsrfModule {
@@ -2059,14 +2079,14 @@ var HttpClientModule = class _HttpClientModule {
     type: _HttpClientModule
   });
   static ɵinj = ɵɵdefineInjector({
-    providers: [provideHttpClient(withInterceptorsFromDi())]
+    providers: [provideHttpClient(withInterceptorsFromDi(), withXhr())]
   });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(HttpClientModule, [{
     type: NgModule,
     args: [{
-      providers: [provideHttpClient(withInterceptorsFromDi())]
+      providers: [provideHttpClient(withInterceptorsFromDi(), withXhr())]
     }]
   }], null, null);
 })();
@@ -2191,7 +2211,7 @@ function transferCacheInterceptorFn(req, next) {
           status,
           statusText
         } = event;
-        if (hasUncacheableCacheControl(headers)) {
+        if (hasUncacheableCacheControl(headers) || hasSetCookieHeader(headers)) {
           return;
         }
         const {
@@ -2216,13 +2236,6 @@ function hasAuthHeaders(req) {
   const headers = req.headers;
   return headers.has("authorization") || headers.has("proxy-authorization") || headers.has("cookie");
 }
-function hasOutgoingCredentials(req) {
-  const {
-    withCredentials,
-    credentials
-  } = req;
-  return withCredentials || credentials === "include" || credentials === "same-origin";
-}
 var UNCACHEABLE_CACHE_CONTROL_DIRECTIVES = /* @__PURE__ */ new Set(["no-store", "private", "no-cache"]);
 function hasUncacheableCacheControl(headers) {
   const cacheControl = headers.get("cache-control");
@@ -2237,8 +2250,17 @@ function hasUncacheableCacheControl(headers) {
 function isNonCacheableRequest(cache) {
   return cache === "no-cache" || cache === "no-store";
 }
+function hasOutgoingCredentials(req) {
+  const {
+    withCredentials,
+    credentials
+  } = req;
+  return withCredentials || credentials === "include" || credentials === "same-origin";
+}
 function sortAndConcatParams(params) {
-  return [...params.keys()].sort().map((k) => `${k}=${params.getAll(k)}`).join("&");
+  const searchParams = new URLSearchParams(params instanceof URLSearchParams ? params : params.toString());
+  searchParams.sort();
+  return searchParams.toString();
 }
 function makeCacheKey(request, mappedRequestUrl) {
   const {
@@ -2421,11 +2443,11 @@ function makeHttpResourceFn(responseType) {
       }
       return void 0;
     };
-    return new HttpResourceImpl(injector, () => normalizeRequest(request, responseType), options?.defaultValue, options?.debugName, options?.parse, options?.equal, getInitialStream);
+    return new HttpResourceImpl(injector, (ctx) => normalizeRequest(ctx, request, responseType), options?.defaultValue, options?.debugName, options?.parse, options?.equal, getInitialStream);
   };
 }
-function normalizeRequest(request, responseType) {
-  let unwrappedRequest = typeof request === "function" ? request() : request;
+function normalizeRequest(ctx, request, responseType) {
+  let unwrappedRequest = typeof request === "function" ? request(ctx) : request;
   if (unwrappedRequest === void 0) {
     return void 0;
   } else if (typeof unwrappedRequest === "string") {
@@ -2488,7 +2510,11 @@ var HttpResourceImpl = class extends ResourceImpl {
       abortSignal
     }) => {
       let sub;
-      const onAbort = () => sub.unsubscribe();
+      let aborted = false;
+      const onAbort = () => {
+        aborted = true;
+        sub?.unsubscribe();
+      };
       abortSignal.addEventListener("abort", onAbort);
       const stream = signal({
         value: void 0
@@ -2542,8 +2568,11 @@ var HttpResourceImpl = class extends ResourceImpl {
           abortSignal.removeEventListener("abort", onAbort);
         }
       });
+      if (aborted) {
+        sub.unsubscribe();
+      }
       return promise;
-    }, defaultValue, equal, debugName, injector, getInitialStream);
+    }, defaultValue, equal, debugName, injector, void 0, getInitialStream);
     this.client = injector.get(HttpClient);
   }
   set(value) {
@@ -2567,8 +2596,8 @@ export {
   HttpResponse,
   HttpErrorResponse,
   HttpStatusCode,
+  HTTP_FETCH_MAX_RESPONSE_SIZE,
   FetchBackend,
-  HttpXhrBackend,
   HTTP_INTERCEPTORS,
   HTTP_ROOT_INTERCEPTOR_FNS,
   REQUESTS_CONTRIBUTE_TO_STABILITY,
@@ -2578,6 +2607,7 @@ export {
   HttpClient,
   JsonpClientBackend,
   JsonpInterceptor,
+  HttpXhrBackend,
   HttpXsrfTokenExtractor,
   HttpFeatureKind,
   provideHttpClient,
@@ -2588,6 +2618,7 @@ export {
   withJsonpSupport,
   withRequestsMadeViaParent,
   withFetch,
+  withXhr,
   HttpClientXsrfModule,
   HttpClientModule,
   HttpClientJsonpModule,
@@ -2595,4 +2626,4 @@ export {
   withHttpTransferCache,
   httpResource
 };
-//# sourceMappingURL=chunk-CVEH2A25.js.map
+//# sourceMappingURL=chunk-XFISCDLZ.js.map

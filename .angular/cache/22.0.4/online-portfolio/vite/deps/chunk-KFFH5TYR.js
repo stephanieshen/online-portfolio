@@ -1,6 +1,6 @@
 import {
   PlatformLocation
-} from "./chunk-SCH5VNI4.js";
+} from "./chunk-TFPDV6BE.js";
 import {
   ApplicationRef,
   Attribute,
@@ -31,6 +31,7 @@ import {
   Renderer2,
   RendererStyleFlags2,
   RuntimeError,
+  Service,
   TemplateRef,
   Version,
   ViewContainerRef,
@@ -57,12 +58,13 @@ import {
   ɵɵdefineInjector,
   ɵɵdefineNgModule,
   ɵɵdefinePipe,
+  ɵɵdefineService,
   ɵɵdirectiveInject,
   ɵɵgetInheritedFactory,
   ɵɵinject,
   ɵɵinjectAttribute,
   ɵɵstyleProp
-} from "./chunk-QPANWYDY.js";
+} from "./chunk-ZMC6RG2R.js";
 import {
   Subject
 } from "./chunk-RSS3ODKE.js";
@@ -70,7 +72,7 @@ import {
   __async,
   __spreadProps,
   __spreadValues
-} from "./chunk-WDMUDEB6.js";
+} from "./chunk-FMGVFGPW.js";
 
 // node_modules/@angular/common/fesm2022/_location-chunk.mjs
 function joinWithSlash(start, end) {
@@ -916,7 +918,7 @@ function getNamedFormat(locale, format) {
 function formatDateTime(str, opt_values) {
   if (opt_values) {
     str = str.replace(/\{([^}]+)}/g, function(match, key) {
-      return opt_values != null && key in opt_values ? opt_values[key] : match;
+      return Object.hasOwn(opt_values, key) ? opt_values[key] : match;
     });
   }
   return str;
@@ -1627,18 +1629,16 @@ var NgLocalization = class _NgLocalization {
   static ɵfac = function NgLocalization_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _NgLocalization)();
   };
-  static ɵprov = ɵɵdefineInjectable({
+  static ɵprov = ɵɵdefineService({
     token: _NgLocalization,
-    factory: () => (() => new NgLocaleLocalization(inject(LOCALE_ID)))(),
-    providedIn: "root"
+    factory: () => (() => new NgLocaleLocalization(inject(LOCALE_ID)))()
   });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(NgLocalization, [{
-    type: Injectable,
+    type: Service,
     args: [{
-      providedIn: "root",
-      useFactory: () => new NgLocaleLocalization(inject(LOCALE_ID))
+      factory: () => new NgLocaleLocalization(inject(LOCALE_ID))
     }]
   }], null, null);
 })();
@@ -3310,7 +3310,7 @@ function isPlatformBrowser(platformId) {
 function isPlatformServer(platformId) {
   return platformId === PLATFORM_SERVER_ID;
 }
-var VERSION = new Version("21.2.17");
+var VERSION = new Version("22.0.4");
 var ViewportScroller = class _ViewportScroller {
   static ɵprov = ɵɵdefineInjectable({
     token: _ViewportScroller,
@@ -3380,7 +3380,7 @@ function findAnchorFromDocument(document, target) {
     while (currentNode) {
       const shadowRoot = currentNode.shadowRoot;
       if (shadowRoot) {
-        const result = shadowRoot.getElementById(target) || shadowRoot.querySelector(`[name="${target}"]`);
+        const result = shadowRoot.getElementById(target) || shadowRoot.querySelector(`[name="${CSS.escape(target)}"]`);
         if (result) {
           return result;
         }
@@ -3430,6 +3430,9 @@ function normalizePath(path) {
 }
 function normalizeSrc(src) {
   return src.startsWith("/") ? src.slice(1) : src;
+}
+function escapeCssUrl(input) {
+  return input.replace(/\\/g, "\\\\").replace(/[\n\r\f\0]/g, "").replace(/"/g, '\\"');
 }
 var noopImageLoader = (config) => config.src;
 var IMAGE_LOADER = new InjectionToken(typeof ngDevMode !== "undefined" && ngDevMode ? "ImageLoader" : "", {
@@ -3736,18 +3739,14 @@ var LCPImageObserver = class _LCPImageObserver {
   static ɵfac = function LCPImageObserver_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _LCPImageObserver)();
   };
-  static ɵprov = ɵɵdefineInjectable({
+  static ɵprov = ɵɵdefineService({
     token: _LCPImageObserver,
-    factory: _LCPImageObserver.ɵfac,
-    providedIn: "root"
+    factory: _LCPImageObserver.ɵfac
   });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(LCPImageObserver, [{
-    type: Injectable,
-    args: [{
-      providedIn: "root"
-    }]
+    type: Service
   }], () => [], null);
 })();
 function logMissingPriorityError(ngSrc) {
@@ -3811,18 +3810,14 @@ var PreconnectLinkChecker = class _PreconnectLinkChecker {
   static ɵfac = function PreconnectLinkChecker_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _PreconnectLinkChecker)();
   };
-  static ɵprov = ɵɵdefineInjectable({
+  static ɵprov = ɵɵdefineService({
     token: _PreconnectLinkChecker,
-    factory: _PreconnectLinkChecker.ɵfac,
-    providedIn: "root"
+    factory: _PreconnectLinkChecker.ɵfac
   });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(PreconnectLinkChecker, [{
-    type: Injectable,
-    args: [{
-      providedIn: "root"
-    }]
+    type: Service
   }], () => [], null);
 })();
 function deepForEach(input, fn) {
@@ -3863,18 +3858,14 @@ var PreloadLinkCreator = class _PreloadLinkCreator {
   static ɵfac = function PreloadLinkCreator_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _PreloadLinkCreator)();
   };
-  static ɵprov = ɵɵdefineInjectable({
+  static ɵprov = ɵɵdefineService({
     token: _PreloadLinkCreator,
-    factory: _PreloadLinkCreator.ɵfac,
-    providedIn: "root"
+    factory: _PreloadLinkCreator.ɵfac
   });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && setClassMetadata(PreloadLinkCreator, [{
-    type: Injectable,
-    args: [{
-      providedIn: "root"
-    }]
+    type: Service
   }], null, null);
 })();
 var BASE64_IMG_MAX_LENGTH_IN_ERROR = 50;
@@ -4582,9 +4573,6 @@ function unwrapSafeUrl(value) {
   }
   return unwrapSafeValue(value);
 }
-function escapeCssUrl(input) {
-  return input.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
 function booleanOrUrlAttribute(value) {
   if (typeof value === "string" && value !== "true" && value !== "false" && value !== "") {
     return value;
@@ -4684,4 +4672,4 @@ export {
   PRECONNECT_CHECK_BLOCKLIST,
   NgOptimizedImage
 };
-//# sourceMappingURL=chunk-YGO37SZP.js.map
+//# sourceMappingURL=chunk-KFFH5TYR.js.map

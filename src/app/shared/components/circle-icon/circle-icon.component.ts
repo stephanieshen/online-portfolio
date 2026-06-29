@@ -1,10 +1,11 @@
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'shen-circle-icon',
   imports: [],
   templateUrl: './circle-icon.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './circle-icon.component.scss'
 })
 export class CircleIconComponent {

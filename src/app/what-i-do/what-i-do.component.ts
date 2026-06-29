@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { DataItem, WHAT_I_DO } from '../constants';
 import { CircleIconComponent } from '../shared/components/circle-icon/circle-icon.component';
 
@@ -8,6 +8,7 @@ import { CircleIconComponent } from '../shared/components/circle-icon/circle-ico
     CircleIconComponent
   ],
   templateUrl: './what-i-do.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './what-i-do.component.scss'
 })
 export class WhatIDoComponent {

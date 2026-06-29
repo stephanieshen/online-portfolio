@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ButtonComponent } from '../shared/components/button/button.component';
 import { DataItem, SOCIALS } from '../constants';
 import { CircleIconComponent } from '../shared/components/circle-icon/circle-icon.component';
@@ -12,6 +12,7 @@ import { NavigationComponent } from '../navigation/navigation.component';
     NavigationComponent
   ],
   templateUrl: './header.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {

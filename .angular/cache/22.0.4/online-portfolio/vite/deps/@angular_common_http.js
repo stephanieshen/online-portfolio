@@ -1,5 +1,6 @@
 import {
   FetchBackend,
+  HTTP_FETCH_MAX_RESPONSE_SIZE,
   HTTP_INTERCEPTORS,
   HTTP_ROOT_INTERCEPTOR_FNS,
   HTTP_TRANSFER_CACHE_ORIGIN_MAP,
@@ -37,12 +38,13 @@ import {
   withJsonpSupport,
   withNoXsrfProtection,
   withRequestsMadeViaParent,
+  withXhr,
   withXsrfConfiguration
-} from "./chunk-CVEH2A25.js";
-import "./chunk-SCH5VNI4.js";
-import "./chunk-QPANWYDY.js";
+} from "./chunk-XFISCDLZ.js";
+import "./chunk-TFPDV6BE.js";
+import "./chunk-ZMC6RG2R.js";
 import "./chunk-RSS3ODKE.js";
-import "./chunk-WDMUDEB6.js";
+import "./chunk-FMGVFGPW.js";
 export {
   FetchBackend,
   HTTP_INTERCEPTORS,
@@ -78,7 +80,9 @@ export {
   withJsonpSupport,
   withNoXsrfProtection,
   withRequestsMadeViaParent,
+  withXhr,
   withXsrfConfiguration,
+  HTTP_FETCH_MAX_RESPONSE_SIZE as ɵHTTP_FETCH_MAX_RESPONSE_SIZE,
   HTTP_ROOT_INTERCEPTOR_FNS as ɵHTTP_ROOT_INTERCEPTOR_FNS,
   HttpInterceptorHandler as ɵHttpInterceptingHandler,
   REQUESTS_CONTRIBUTE_TO_STABILITY as ɵREQUESTS_CONTRIBUTE_TO_STABILITY,

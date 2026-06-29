@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { HeaderComponent } from './header/header.component';
 import { WhatIDoComponent } from './what-i-do/what-i-do.component';
 import { ToolsComponent } from './tools/tools.component';
@@ -15,6 +15,7 @@ import { ContactComponent } from './contact/contact.component';
     ContactComponent
   ],
   templateUrl: './app.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
