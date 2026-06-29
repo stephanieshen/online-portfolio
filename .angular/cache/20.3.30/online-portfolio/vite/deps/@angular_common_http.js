@@ -28,6 +28,7 @@ import {
   JsonpClientBackend,
   JsonpInterceptor,
   REQUESTS_CONTRIBUTE_TO_STABILITY,
+  httpResource,
   provideHttpClient,
   withFetch,
   withHttpTransferCache,
@@ -37,10 +38,11 @@ import {
   withNoXsrfProtection,
   withRequestsMadeViaParent,
   withXsrfConfiguration
-} from "./chunk-A33RIVEV.js";
-import "./chunk-SAEO7BCD.js";
-import "./chunk-E7R4FTH5.js";
-import "./chunk-5TID76VL.js";
+} from "./chunk-JDAFPVSY.js";
+import "./chunk-IYEWMFKI.js";
+import "./chunk-BDNXNDFS.js";
+import "./chunk-RSS3ODKE.js";
+import "./chunk-WDMUDEB6.js";
 export {
   FetchBackend,
   HTTP_INTERCEPTORS,
@@ -68,6 +70,7 @@ export {
   HttpXsrfTokenExtractor,
   JsonpClientBackend,
   JsonpInterceptor,
+  httpResource,
   provideHttpClient,
   withFetch,
   withInterceptors,
